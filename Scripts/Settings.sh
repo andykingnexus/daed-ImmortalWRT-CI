@@ -70,9 +70,6 @@ function generate_config() {
     remove_wifi "$target"
   fi
 
-  # eBPF
-  cat_ebpf_config "$config_file"
-
   # skb recycler
   enable_skb_recycler "$config_file"
 
@@ -81,9 +78,6 @@ function generate_config() {
 
   # kernel 6.18 perf config
   pin_arm_perf_kernel_config
-
-  # 写入 kernel config
-  cat_kernel_config "target/linux/qualcommax/${target}/config-default"
 
 }
 
