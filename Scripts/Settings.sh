@@ -82,6 +82,43 @@ function generate_config() {
 }
 
 ########################################
+# 禁用 Wi-Fi 用户态包
+########################################
+function disable_wifi_userspace() {
+  cat >> ./.config <<'EOF'
+
+# No Wi-Fi userspace packages for pure wired AX18 build
+CONFIG_PACKAGE_hostapd=n
+CONFIG_PACKAGE_hostapd-common=n
+CONFIG_PACKAGE_hostapd-utils=n
+CONFIG_PACKAGE_hostapd-openssl=n
+CONFIG_PACKAGE_hostapd-wolfssl=n
+CONFIG_PACKAGE_hostapd-mbedtls=n
+CONFIG_PACKAGE_wpad=n
+CONFIG_PACKAGE_wpad-basic=n
+CONFIG_PACKAGE_wpad-basic-mbedtls=n
+CONFIG_PACKAGE_wpad-basic-openssl=n
+CONFIG_PACKAGE_wpad-basic-wolfssl=n
+CONFIG_PACKAGE_wpad-mbedtls=n
+CONFIG_PACKAGE_wpad-openssl=n
+CONFIG_PACKAGE_wpad-wolfssl=n
+CONFIG_PACKAGE_wpad-full=n
+CONFIG_PACKAGE_wpad-full-mbedtls=n
+CONFIG_PACKAGE_wpad-full-openssl=n
+CONFIG_PACKAGE_wpad-full-wolfssl=n
+CONFIG_PACKAGE_wpa-cli=n
+CONFIG_PACKAGE_wpa-supplicant=n
+CONFIG_PACKAGE_wpa-supplicant-mbedtls=n
+CONFIG_PACKAGE_wpa-supplicant-openssl=n
+CONFIG_PACKAGE_wpa-supplicant-p2p=n
+CONFIG_PACKAGE_wpa-supplicant-wolfssl=n
+CONFIG_PACKAGE_iw=n
+CONFIG_PACKAGE_wireless-regdb=n
+CONFIG_PACKAGE_wifi-scripts=n
+EOF
+}
+
+########################################
 # 执行生成 config
 ########################################
 generate_config
@@ -158,10 +195,16 @@ echo "CONFIG_PACKAGE_luci-app-passwall=n" >> ./.config
 echo "CONFIG_PACKAGE_luci-app-passwall2=n" >> ./.config
 echo "CONFIG_PACKAGE_luci-app-mosdns=n" >> ./.config
 
+# 纯有线路由：强制禁用 Wi-Fi 用户态组件，避免编译 hostapd/wpad
+disable_wifi_userspace
+
 # 手动调整的插件；默认不填即可
 if [ -n "$WRT_PACKAGE" ]; then
   echo -e "$WRT_PACKAGE" >> ./.config
 fi
+
+# 手动插件追加后再禁用一次 Wi-Fi 用户态，确保最后生效
+disable_wifi_userspace
 
 # 无 Wi-Fi 配置标志
 if [[ "${WRT_CONFIG,,}" == *"wifi"* && "${WRT_CONFIG,,}" == *"no"* ]]; then
@@ -201,3 +244,6 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
     fi
   fi
 fi
+
+# 最终再禁用一次，避免前面依赖或手动包把 wpad 重新拉起
+disable_wifi_userspace
